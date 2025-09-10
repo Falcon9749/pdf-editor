@@ -1,6 +1,6 @@
 # pip install PyMuPDF ttkbootstrap Pillow
 
-import fitz # PyMuPDF
+import fitz  # PyMuPDF
 import tkinter as tk
 from tkinter import filedialog, simpledialog, messagebox
 import ttkbootstrap as tb
@@ -19,6 +19,8 @@ class PDFEditorApp:
         self.scale = None  # zoom control
         self.words = []    # words on current page
         self.photo_image = None
+        self.undo_stack = []  # histórico de desfazer
+        self.redo_stack = []  # histórico de refazer
 
         # ---------------- Top Frame ----------------
         top_frame = tb.Frame(root)
@@ -30,6 +32,8 @@ class PDFEditorApp:
         tb.Button(top_frame, text="⏭ Próxima", bootstyle="secondary", command=self.next_page).pack(side=tk.LEFT, padx=4)
         tb.Button(top_frame, text="🔍 Zoom +", bootstyle="secondary", command=self.zoom_in).pack(side=tk.LEFT, padx=4)
         tb.Button(top_frame, text="🔍 Zoom -", bootstyle="secondary", command=self.zoom_out).pack(side=tk.LEFT, padx=4)
+        tb.Button(top_frame, text="↩️ Desfazer", bootstyle="warning", command=self.undo_edit).pack(side=tk.LEFT, padx=4)
+        tb.Button(top_frame, text="🔄 Refazer", bootstyle="info", command=self.redo_edit).pack(side=tk.LEFT, padx=4)
 
         self.page_label = tb.Label(top_frame, text="Página: -/-", bootstyle="inverse-dark")
         self.page_label.pack(side=tk.RIGHT, padx=10)
@@ -52,6 +56,8 @@ class PDFEditorApp:
         h_scroll.config(command=self.canvas.xview)
 
         self.canvas.bind("<Button-1>", self.on_click)
+        self.root.bind("<Control-z>", lambda e: self.undo_edit())  # Ctrl+Z
+        self.root.bind("<Control-y>", lambda e: self.redo_edit())  # Ctrl+Y
 
     # ---------------- Abrir PDF ----------------
     def open_pdf(self):
@@ -63,6 +69,8 @@ class PDFEditorApp:
             self.pdf_path = path
             self.current_page = 0
             self.scale = None
+            self.undo_stack.clear()
+            self.redo_stack.clear()
             self.render_page()
         except Exception as e:
             messagebox.showerror("Erro", f"Não foi possível abrir o PDF:\n{e}")
@@ -111,7 +119,6 @@ class PDFEditorApp:
             return
 
         page = self.doc[self.current_page]
-        rect = page.rect
         zoom = self.scale or 1.0
         mat = fitz.Matrix(zoom, zoom)
         pix = page.get_pixmap(matrix=mat)
@@ -156,6 +163,9 @@ class PDFEditorApp:
             if new_text:
                 page = self.doc[self.current_page]
 
+                # 🔥 salva estado antes de editar
+                self.save_state()
+
                 # 1) cobre com branco
                 page.draw_rect(rect, color=(1, 1, 1), fill=(1, 1, 1))
 
@@ -169,6 +179,36 @@ class PDFEditorApp:
                                  color=(0, 0, 0))
 
                 self.render_page()
+
+    # ---------------- Histórico ----------------
+    def save_state(self):
+        if self.doc:
+            self.undo_stack.append(self.doc.tobytes())
+            self.redo_stack.clear()  # limpa refazer após nova edição
+
+    def undo_edit(self):
+        if not self.undo_stack:
+            messagebox.showinfo("Desfazer", "Nenhuma edição para desfazer.")
+            return
+        try:
+            last_state = self.undo_stack.pop()
+            self.redo_stack.append(self.doc.tobytes())
+            self.doc = fitz.open("pdf", last_state)
+            self.render_page()
+        except Exception as e:
+            messagebox.showerror("Erro", f"Falha ao desfazer:\n{e}")
+
+    def redo_edit(self):
+        if not self.redo_stack:
+            messagebox.showinfo("Refazer", "Nenhuma edição para refazer.")
+            return
+        try:
+            next_state = self.redo_stack.pop()
+            self.undo_stack.append(self.doc.tobytes())
+            self.doc = fitz.open("pdf", next_state)
+            self.render_page()
+        except Exception as e:
+            messagebox.showerror("Erro", f"Falha ao refazer:\n{e}")
 
 
 if __name__ == "__main__":
