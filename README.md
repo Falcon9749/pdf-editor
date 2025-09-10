@@ -46,3 +46,7 @@ Use Zoom + / Zoom - para aumentar ou reduzir a visualização.
 Clique em qualquer palavra → digite o novo texto → ela será substituída.
 
 Salve o resultado com 💾 Salvar PDF.
+
+# Pode baixar o executavel.
+
+Esta disponivel também que na pasta dist.
