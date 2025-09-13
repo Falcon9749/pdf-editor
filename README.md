@@ -1,7 +1,10 @@
 # 📝 Editor de PDF com Tkinter + PyMuPDF
 
 Um aplicativo em Python com interface gráfica (Tkinter + ttkbootstrap) para **visualizar, navegar, dar zoom e editar palavras em PDFs**.  
-Permite substituir textos diretamente no PDF clicando sobre a palavra desejada.  
+Permite substituir textos diretamente no PDF clicando sobre a palavra desejada.
+Permite Também adicionar um novo texto em uma area em branco. 
+Exemplo: Para preencher um formulario que não tem a linha para substituir.
+No adicionar texto pode se almentar ou diminuir o caracter com TAB para aumentar ou SHIFT+TAB para diminuir.
 
 ---
 
@@ -17,8 +20,9 @@ Permite substituir textos diretamente no PDF clicando sobre a palavra desejada.
 
 ## 📦 Instalação
 
-1. Clone este repositório:  
+1. Clone este repositório:   
 
+    Tem 4 versões diferentes do basico ou avançado
    ```bash
    git clone https://github.com/Falcon9749/pdf-editor.git
    cd pdf-editor
